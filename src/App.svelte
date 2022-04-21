@@ -175,7 +175,15 @@
     {finishTime == "Invalid Date" ? "" : "Finish Time"}
   </h2>
   <h3>
-    {finishTime == "Invalid Date" ? "" : finishTime.toLocaleString()}
+    {finishTime == "Invalid Date"
+      ? ""
+      : finishTime.toLocaleString([], {
+          day: "numeric",
+          month: "numeric",
+          year: "numeric",
+          hour: "numeric",
+          minute: "numeric",
+        })}
   </h3>
   <div class="container">
     <p>How many days will you work this week?</p>
