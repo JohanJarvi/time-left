@@ -43,12 +43,12 @@
 
   // Inputs
   let timeStartedTodayInput = "";
-  let timesWorkedThisWeekInput = "0:00";
+  let timesWorkedThisWeekInput;
   let amountOfBreakInput = "0:00";
-  let daysWorked = 0;
+  let daysToWork = 0;
 
   // Global constants
-  $: minutesInWorkWeek = getMinutesTotalForWorkDays(daysWorked);
+  $: minutesInWorkWeek = getMinutesTotalForWorkDays(daysToWork);
 
   // Global variables
   let timeLeftToWorkMessage = "Click the button to update the times left";
@@ -78,7 +78,7 @@
     timeWorkedThisWeekInput,
     minutesInWorkWeek
   ) => {
-    if (!timeWorkedThisWeekInput) return 0;
+    if (!timeWorkedThisWeekInput) return minutesInWorkWeek;
     const timeWorked = timeWorkedThisWeekInput.split(",");
 
     const timeWorkedInMinutes = timeWorked.map((time) =>
@@ -91,6 +91,7 @@
     return minutesInWorkWeek - totalTimeWorkedInMinutes;
   };
 
+  let minutesRemainingInWorkWeek = 0;
   let minutesRemainingToday = 0;
 
   const updateMessage = (
@@ -101,28 +102,31 @@
     minutesInWorkWeek
   ) => {
     const minutesOfBreak = convertTimeToMinutes(amountOfBreak);
-    const minutesRemainingInWorkWeek =
+
+    minutesRemainingInWorkWeek =
       getRemainingMinutesToWorkInWeek(timesWorkedThisWeek, minutesInWorkWeek) +
-      minutesOfBreak;
+      minutesOfBreak -
+      timeBetweenStartedAndNowInMinutes;
+
     minutesRemainingToday =
       getMinutesRemainingToday(timeStartedToday) + minutesOfBreak;
-    const timeLeft = convertMinutesToTime(
-      minutesRemainingInWorkWeek - timeBetweenStartedAndNowInMinutes
-    );
+
+    const timeLeft = convertMinutesToTime(minutesRemainingInWorkWeek);
     const timeLeftToday = convertMinutesToTime(minutesRemainingToday);
     workedToday = convertMinutesToTime(
       timeBetweenStartedAndNowInMinutes - minutesOfBreak
     );
+
     if (
-      minutesRemainingInWorkWeek - timeBetweenStartedAndNowInMinutes <
-      minutesRemainingToday
+      timesWorkedThisWeek &&
+      timesWorkedThisWeek.split(",").length === daysToWork - 1
     ) {
-      timeLeftToWorkTodayMessage = "";
+      timeLeftToWorkMessage = "";
+      timeLeftToWorkTodayMessage = getTimeLeftToWorkTodayMessage(timeLeft);
     } else {
+      timeLeftToWorkMessage = getTimeLeftToWorkMessage(timeLeft);
       timeLeftToWorkTodayMessage = getTimeLeftToWorkTodayMessage(timeLeftToday);
     }
-
-    timeLeftToWorkMessage = getTimeLeftToWorkMessage(timeLeft);
   };
 
   let timeNow = new Date();
@@ -139,66 +143,75 @@
     minutesInWorkWeek
   );
 
-  const getFinishingTime = (timeNow, minutesRemainingToday) => {
+  const getFinishingTime = (
+    timeNow,
+    minutesRemainingToday,
+    minutesRemainingInWorkWeek
+  ) => {
+    let daysWorked = 0;
+    if (timesWorkedThisWeekInput)
+      daysWorked = timesWorkedThisWeekInput.split(",").length;
+
+    if (daysWorked === daysToWork - 1)
+      return new Date(timeNow.getTime() + minutesRemainingInWorkWeek * 60000);
+
     return new Date(timeNow.getTime() + minutesRemainingToday * 60000);
   };
 
-  $: finishTime = getFinishingTime(timeNow, minutesRemainingToday);
+  $: finishTime = getFinishingTime(
+    timeNow,
+    minutesRemainingToday,
+    minutesRemainingInWorkWeek
+  );
 </script>
 
 <main>
   <h1>Time left</h1>
-  <p>How many days will you work this week?</p>
-  <select bind:value={daysWorked}>
-    <option>1</option>
-    <option>2</option>
-    <option>3</option>
-    <option>4</option>
-    <option>5</option>
-    <option>6</option>
-    <option>7</option>
-  </select>
-  <p>
-    Please enter the times you have worked this week as a comma seperated list
-    (e.g. 8:12, 4:54, ..., 5:57):
-  </p>
-  <input bind:value={timesWorkedThisWeekInput} />
-  <p>Please select the time you started today (e.g. 7:45):</p>
-  <input type="datetime-local" bind:value={timeStartedTodayInput} />
-  <p>Please enter the amount of break time you have had today (e.g. 0:45):</p>
-  <input bind:value={amountOfBreakInput} />
-  <p>
-    <strong>
-      {timeLeftToWorkMessage}
-    </strong>
-  </p>
-  <p>
-    <strong>
-      {timeLeftToWorkTodayMessage}
-    </strong>
-  </p>
-  {#if !workedToday.includes("NaN")}
-    <p>
-      You've worked {workedToday} today.
-    </p>
-  {/if}
+  <h2>Time Now</h2>
+  <h3>
+    {timeNow.toLocaleTimeString()}
+  </h3>
+  <h2>
+    {finishTime == "Invalid Date" ? "" : "Finish Time"}
+  </h2>
+  <h3>
+    {finishTime == "Invalid Date" ? "" : finishTime.toLocaleString()}
+  </h3>
   <div class="container">
-    <h2>Time Now</h2>
+    <p>How many days will you work this week?</p>
+    <select bind:value={daysToWork}>
+      <option>1</option>
+      <option>2</option>
+      <option>3</option>
+      <option>4</option>
+      <option>5</option>
+      <option>6</option>
+      <option>7</option>
+    </select>
+    <p>
+      Please enter the times you have worked this week as a comma seperated list
+      (e.g. 8:12, 4:54, ..., 5:57):
+    </p>
+    <input bind:value={timesWorkedThisWeekInput} />
+    <p>Please select the time you started today (e.g. 7:45):</p>
+    <input type="datetime-local" bind:value={timeStartedTodayInput} />
+    <p>Please enter the amount of break time you have had today (e.g. 0:45):</p>
+    <input bind:value={amountOfBreakInput} />
     <p>
       <strong>
-        {timeNow.toLocaleTimeString()}
+        {timeLeftToWorkMessage}
       </strong>
     </p>
     <p>
-      {finishTime == "Invalid Date"
-        ? ""
-        : "You will finish your current work day at:"}
-    </p>
-    <p>
       <strong>
-        {finishTime == "Invalid Date" ? "" : finishTime.toLocaleString()}
+        {timeLeftToWorkTodayMessage}
       </strong>
     </p>
+    {#if !workedToday.includes("NaN")}
+      <p>
+        You've worked {workedToday} today.
+      </p>
+    {/if}
   </div>
 </main>
 
