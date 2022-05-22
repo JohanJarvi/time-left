@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "build": "npm run build",
+    "build": "rollup -c",
     "dev": "rollup -c -w",
     "start": "npm run start"
   },
