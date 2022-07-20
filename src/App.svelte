@@ -7,16 +7,26 @@
     return hour * 60 + minute;
   };
 
-  const convertMinutesToTime = (minutes) => {
-    // if (minutes < 0) return `0:00`;
-    const hourPortion = Math.floor(minutes / 60);
+  const convertMinutesToTime = (minutes, isWorkedToday = false) => {
+    let hourPortion = Math.floor(minutes / 60);
     const minutePortion = Math.round(((minutes / 60) % 1) * 60);
 
     if (minutePortion === 60) {
       return `${hourPortion + 1} hours`;
     }
 
-    return `${hourPortion} hours and ${minutePortion} minutes`;
+    if (isWorkedToday) {
+      return `${hourPortion} hours and ${minutePortion} minutes`;
+    }
+
+    if (minutes < 0) {
+      hourPortion += 1;
+      return `worked ${Math.abs(hourPortion)} hours and ${Math.abs(
+        minutePortion
+      )} minutes too much`;
+    }
+
+    return `${hourPortion} hours and ${minutePortion} minutes left to work`;
   };
 
   const getTimeLeftToWorkMessage = (timeLeft) => {
@@ -27,14 +37,14 @@
       return `If today is day one then see time left today below, otherwise enter times worked above.`;
     }
 
-    return `You have ${timeLeft} left to work this week.`;
+    return `You have ${timeLeft} this week.`;
   };
 
   const getTimeLeftToWorkTodayMessage = (timeLeft) => {
     if (timeLeft.includes("NaN")) {
       return `Please use the date time picker to select the time started today!`;
     }
-    return `You have ${timeLeft} left to work today.`;
+    return `You have ${timeLeft} today.`;
   };
 
   const getTimeLeftToDailyMessage = (timeLeft) => {
@@ -42,7 +52,7 @@
 
     const daysWorked = timesWorkedThisWeekInput.split(",").length + 1;
 
-    return `You have ${timeLeft} left to work today to align with the ${daysWorked} day total.`;
+    return `You have ${timeLeft} today to align with the ${daysWorked} day total.`;
   };
 
   const getMinutesTotalForWorkDays = (workDays) => {
@@ -149,7 +159,8 @@
     const timeLeft = convertMinutesToTime(minutesRemainingInWorkWeek);
     const timeLeftToday = convertMinutesToTime(minutesRemainingToday);
     workedToday = convertMinutesToTime(
-      timeBetweenStartedAndNowInMinutes - minutesOfBreak
+      timeBetweenStartedAndNowInMinutes - minutesOfBreak,
+      true
     );
     const timeLeftTodayBasedOnWeekSoFar = convertMinutesToTime(
       minutesRemainingTodayBasedOnWeekSoFar
@@ -160,6 +171,7 @@
       timesWorkedThisWeek.split(",").length === daysToWork - 1
     ) {
       timeLeftToWorkMessage = "";
+      timeLeftToWorkDailyMessage = "";
       timeLeftToWorkTodayMessage = getTimeLeftToWorkTodayMessage(timeLeft);
     } else {
       timeLeftToWorkMessage = getTimeLeftToWorkMessage(timeLeft);
@@ -253,12 +265,12 @@
     </p>
     <p>
       <strong>
-        {timeLeftToWorkMessage}
+        {timeLeftToWorkTodayMessage}
       </strong>
     </p>
     <p>
       <strong>
-        {timeLeftToWorkTodayMessage}
+        {timeLeftToWorkMessage}
       </strong>
     </p>
     {#if !workedToday.includes("NaN")}
@@ -283,5 +295,6 @@
 
   .container {
     margin-top: 50px;
+    margin-bottom: 50px;
   }
 </style>
