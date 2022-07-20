@@ -37,6 +37,14 @@
     return `You have ${timeLeft} left to work today.`;
   };
 
+  const getTimeLeftToDailyMessage = (timeLeft) => {
+    if (timeLeft.includes("NaN")) return "";
+
+    const daysWorked = timesWorkedThisWeekInput.split(",").length + 1;
+
+    return `You have ${timeLeft} left to work today to align with the ${daysWorked} day total.`;
+  };
+
   const getMinutesTotalForWorkDays = (workDays) => {
     return Math.ceil(7.6 * workDays * 60);
   };
@@ -52,6 +60,7 @@
 
   // Global variables
   let timeLeftToWorkMessage = "Click the button to update the times left";
+  let timeLeftToWorkDailyMessage = "";
   let timeLeftToWorkTodayMessage = "";
   let timeBetweenStartedAndNowInMinutes = 0;
   let workedToday = 0;
@@ -91,7 +100,28 @@
     return minutesInWorkWeek - totalTimeWorkedInMinutes;
   };
 
+  const getRemainingMinutesToWorkTodayBasedOnWeekSoFar = (
+    timeWorkedThisWeekInput
+  ) => {
+    if (!timeWorkedThisWeekInput) return minutesInWorkWeek;
+    const timeWorked = timeWorkedThisWeekInput.split(",");
+
+    const timeWorkedInMinutes = timeWorked.map((time) =>
+      convertTimeToMinutes(time)
+    );
+
+    const minutesInDaysWorked = getMinutesTotalForWorkDays(
+      timeWorked.length + 1
+    );
+
+    const totalTimeWorkedInMinutes = timeWorkedInMinutes.reduce(
+      (a, b) => a + b
+    );
+    return minutesInDaysWorked - totalTimeWorkedInMinutes;
+  };
+
   let minutesRemainingInWorkWeek = 0;
+  let minutesRemainingTodayBasedOnWeekSoFar = 0;
   let minutesRemainingToday = 0;
 
   const updateMessage = (
@@ -111,10 +141,18 @@
     minutesRemainingToday =
       getMinutesRemainingToday(timeStartedToday) + minutesOfBreak;
 
+    minutesRemainingTodayBasedOnWeekSoFar =
+      getRemainingMinutesToWorkTodayBasedOnWeekSoFar(timesWorkedThisWeek) +
+      minutesOfBreak -
+      timeBetweenStartedAndNowInMinutes;
+
     const timeLeft = convertMinutesToTime(minutesRemainingInWorkWeek);
     const timeLeftToday = convertMinutesToTime(minutesRemainingToday);
     workedToday = convertMinutesToTime(
       timeBetweenStartedAndNowInMinutes - minutesOfBreak
+    );
+    const timeLeftTodayBasedOnWeekSoFar = convertMinutesToTime(
+      minutesRemainingTodayBasedOnWeekSoFar
     );
 
     if (
@@ -126,6 +164,9 @@
     } else {
       timeLeftToWorkMessage = getTimeLeftToWorkMessage(timeLeft);
       timeLeftToWorkTodayMessage = getTimeLeftToWorkTodayMessage(timeLeftToday);
+      timeLeftToWorkDailyMessage = getTimeLeftToDailyMessage(
+        timeLeftTodayBasedOnWeekSoFar
+      );
     }
   };
 
@@ -205,6 +246,11 @@
     <input type="datetime-local" bind:value={timeStartedTodayInput} />
     <p>Please enter the amount of break time you have had today (e.g. 0:45):</p>
     <input bind:value={amountOfBreakInput} />
+    <p>
+      <strong>
+        {timeLeftToWorkDailyMessage}
+      </strong>
+    </p>
     <p>
       <strong>
         {timeLeftToWorkMessage}
