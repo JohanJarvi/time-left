@@ -48,7 +48,7 @@
   };
 
   const getTimeLeftToDailyMessage = (timeLeft) => {
-    if (timeLeft.includes("NaN")) return "";
+    if (timeLeft.includes("NaN") || !timesWorkedThisWeekInput) return "";
 
     const daysWorked = timesWorkedThisWeekInput.split(",").length + 1;
 
