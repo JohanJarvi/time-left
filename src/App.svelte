@@ -198,6 +198,7 @@
 
   const getFinishingTime = (
     timeNow,
+    minutesRemainingToday,
     minutesRemainingTodayBasedOnWeekSoFar,
     minutesRemainingInWorkWeek
   ) => {
@@ -208,6 +209,9 @@
     if (daysWorked === daysToWork - 1)
       return new Date(timeNow.getTime() + minutesRemainingInWorkWeek * 60000);
 
+    if (daysWorked === 0)
+      return new Date(timeNow.getTime() + minutesRemainingToday * 60000);
+
     return new Date(
       timeNow.getTime() + minutesRemainingTodayBasedOnWeekSoFar * 60000
     );
@@ -215,6 +219,7 @@
 
   $: finishTime = getFinishingTime(
     timeNow,
+    minutesRemainingToday,
     minutesRemainingTodayBasedOnWeekSoFar,
     minutesRemainingInWorkWeek
   );
